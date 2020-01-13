@@ -10,4 +10,4 @@ spring:
     username: mqadmin
     password: admin
     routingKey: my.queue.key
-    exchange: amq.direct
+    exchange: mu_queue_exchange

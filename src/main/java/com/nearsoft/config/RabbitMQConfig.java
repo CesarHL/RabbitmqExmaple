@@ -1,11 +1,13 @@
 package com.nearsoft.config;
 
 import com.nearsoft.listener.MqListener;
+import com.nearsoft.listener.MqMessageListener;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.listener.MessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,39 +19,23 @@ public class RabbitMQConfig {
 
 
   @Value("${spring.rabbitmq.routingKey}")
-  private String routingKey;
+  private String queueName;
 
   @Value("${spring.rabbitmq.exchange}")
   private String exchange;
 
   @Bean
   public Queue queue() {
-    return new Queue(routingKey, true);
+    return new Queue(queueName, Boolean.FALSE);
   }
 
   @Bean
-  public TopicExchange exchange() {
-    return new TopicExchange(exchange);
-  }
-
-  @Bean
-  public Binding binding(Queue queue, TopicExchange exchange) {
-    return BindingBuilder.bind(queue).to(exchange).with(routingKey);
-  }
-
-  @Bean
-  public SimpleMessageListenerContainer container(ConnectionFactory connectionFactory,
-      MessageListenerAdapter listenerAdapter) {
-    SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-    container.setConnectionFactory(connectionFactory);
-    container.setQueueNames(routingKey);
-    container.setMessageListener(listenerAdapter);
-    return container;
-  }
-
-  @Bean
-  public MessageListenerAdapter myQueueListener(MqListener listener) {
-    return new MessageListenerAdapter(listener, "onMessage");
+  public MessageListenerContainer messageListenerContainer(ConnectionFactory connectionFactory ) {
+    SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer();
+    simpleMessageListenerContainer.setConnectionFactory(connectionFactory);
+    simpleMessageListenerContainer.setQueues(queue());
+    simpleMessageListenerContainer.setMessageListener(new MqMessageListener());
+    return simpleMessageListenerContainer;
   }
 
 }
